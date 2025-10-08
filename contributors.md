@@ -7,3 +7,7 @@ Rindy Tuy
 Oluchi Nwabuoku
   Email: onwabuok@cougarnet.uh.edu
   ID: 2414240
+
+Rasinie Karen Seunsom
+  Email: rkseunso@cougarnet.uh.edu
+  ID: 1436206
