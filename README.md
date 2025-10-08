@@ -4,4 +4,5 @@ Software Design class 2025 project
 Meet our team members: 
 Rindy Tuy, 
 Oluchi Nwabuoku,
-Cong Duy Vuong Dao
+Cong Duy Vuong Dao,
+Rasinie Karen Seunsom
