@@ -24,4 +24,4 @@ Rasinie Karen Seunsom
    http://127.0.0.1:5000
    ```
 
-That's it! The app will open on the login page.
+That's it! The app will open on the home page to the login page.
