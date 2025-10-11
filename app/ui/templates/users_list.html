@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Users - O365 RBAC{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1>Users</h1>
+            <p>A list of all users in the system including their name, email, and role.</p>
+        </div>
+        <button type="button">Add user</button>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="4" class="empty-state">
+                    No users found. User management will be implemented in the next phase.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

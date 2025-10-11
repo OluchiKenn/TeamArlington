@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Home - O365 RBAC{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h2>Welcome to O365 RBAC</h2>
+    <p>Office 365 Role-Based Access Control System</p>
+    <a href="{{ url_for('auth.login') }}">
+        <button type="button">Get Started</button>
+    </a>
+</div>
+{% endblock %}
