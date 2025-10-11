@@ -6,7 +6,10 @@
 <div class="login-container">
     <h2>Sign in to your account</h2>
     <p>Use your Microsoft Office 365 account</p>
-    <button type="button">Sign in with Microsoft</button>
+    <p>Use your Microsoft Office 365 account</p>
+    <a href="{{ url_for('auth.login') }}">
+        <button type="button">Sign in with Microsoft</button>
+    </a>
     <p style="margin-top: 1rem; font-size: 0.875rem; color: #999;">
         Authentication will be implemented in the next phase
     </p>

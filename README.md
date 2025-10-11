@@ -21,7 +21,7 @@ Rasinie Karen Seunsom
 
 3. Open your web browser and go to:
    ```
-   http://127.0.0.1:5000
+   http://localhost:5000
    ```
 
 That's it! The app will open on the home page to the login page.
