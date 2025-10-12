@@ -1,11 +1,79 @@
 # TeamArlington
 Software Design class 2025 project 
 
-Meet our team members: 
-Rindy Tuy, 
-Oluchi Nwabuoku,
-Cong Duy Vuong Dao,
-Rasinie Karen Seunsom
+**Team Members:**  
+Rindy Tuy, Oluchi Nwabuoku, Cong Duy Vuong Dao, Rasinie Karen Seunsom
+
+---
+
+## Project Overview
+
+We're building an **O365 Role-Based Access Control (RBAC) system** - a web application that lets administrators manage user access and permissions in an organization using Office 365 authentication.
+
+### Key Features
+1. **Authentication** - Login with Office 365 accounts
+2. **User Management** - Add, edit, view, and remove users
+3. **Roles & Permissions** - Control access levels (Admin vs Basic User)
+4. **User Deactivation** - Temporarily disable accounts
+
+> For detailed feature documentation, see [userManagement.md](userManagement.md)
+
+---
+
+## Tech Stack
+
+- **Flask** - Python web framework
+- **MSAL** - Microsoft Authentication Library
+- **SQLite** - Database for user storage
+- **HTML/CSS** - Frontend templates and styling
+
+---
+
+## Project Structure
+
+```
+/TeamArlington
+  /app
+    __init__.py              # Main app setup
+    /auth                    # Everything related to login/logout
+      routes.py              # Login, logout, callback URLs
+    /users                   # Everything related to user management
+      routes.py              # List, add, edit, delete users
+    /ui
+      /templates             # HTML pages
+        base.html            # Layout used by all pages
+        home.html            # Landing page
+        auth_login.html      # Login page
+        users_list.html      # User management page
+      /css
+        style.css            # Custom styling
+  run.py                     # Starts the application
+  requirements.txt           # Python packages needed
+```
+
+## How Data Flows
+
+1. **User visits website** → Flask receives request
+2. **Flask checks route** → Finds matching function
+3. **Function runs** → Gets data from database if needed
+4. **Renders template** → Fills in HTML with data
+5. **Sends back to user** → Browser displays page
+
+## Key Concepts
+
+### Blueprints
+Think of blueprints as mini-apps within the main app. We have:
+- `auth_bp`: Handles login/logout
+- `users_bp`: Handles user management
+
+### Routes
+Routes are URLs that do things:
+- `/` → Home page
+- `/auth/login` → Login page
+- `/users` → User list page
+
+### Sessions
+After you log in, Flask remembers you so you don't have to log in on every page.
 
 ## How to Setup and Run
 
@@ -24,4 +92,9 @@ Rasinie Karen Seunsom
    http://localhost:5000
    ```
 
-That's it! The app will open on the home page to the login page.
+---
+
+## Documentation
+
+- **[userManagement.md](userManagement.md)** - Detailed feature implementation guide
+- **[graphs/contributors.md](graphs/contributors.md)** - Team member contributions
