@@ -18,4 +18,4 @@ Rasinie Karen Seunsom
 Cong Duy Vuong Dao
   Email: cdao2@cougarnet.uh.edu
   ID: 2220286
-    Work: User Deactivation
+    Work: User Deactivation Setup
