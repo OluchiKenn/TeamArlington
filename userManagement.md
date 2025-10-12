@@ -62,6 +62,10 @@
 4. Basic users only see their own profile
 5. Unauthorized access returns 403 error
 
+**Key files:**
+- `app/users/routes.py` - Permission checks and decorators
+- `app/ui/templates/users_list.html` - Show/hide buttons based on role
+- `app/auth/routes.py` - Store user role in session
 
 ---
 
@@ -77,6 +81,10 @@
 5. Inactive users appear grayed out in table
 6. Admin can click "Activate" to restore access
 
+**Key files:**
+- `app/users/routes.py` - Deactivate/activate endpoints
+- `app/auth/routes.py` - Status check during login
+- `app/ui/templates/users_list.html` - Deactivate/Activate buttons
 
 ---
 
@@ -117,5 +125,3 @@
 - **Flask** - Web framework for routing and templates
 - **MSAL** - Microsoft authentication library
 - **SQLite** - Database for user storage
-- **Blueprints** - Organize routes into modules (auth, users)
-- **Sessions** - Store logged-in user info
