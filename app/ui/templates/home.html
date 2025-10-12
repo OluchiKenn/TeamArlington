@@ -3,11 +3,74 @@
 {% block title %}Home - O365 RBAC{% endblock %}
 
 {% block content %}
+<style>
+  /* Page-local styles; safe even if you also have style.css */
+  .login-container {
+    max-width: 520px;
+    margin: 64px auto;
+    text-align: center;
+    background: #ffffff;
+    padding: 28px 32px;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+  }
+  .login-container h2 {
+    margin: 0 0 8px 0;
+    color: #222;
+  }
+  .login-container p {
+    margin: 0 0 24px 0;
+    color: #666;
+  }
+  .actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid #0a66c2;
+    background: #0a66c2;
+    color: #fff;
+  }
+  .btn:hover { background: #084f99; border-color: #084f99; }
+  .btn.secondary {
+    background: #fff;
+    color: #0a66c2;
+  }
+  .btn.secondary:hover {
+    background: #f5f9ff;
+  }
+  .small {
+    margin-top: 16px;
+    font-size: 0.9rem;
+    color: #555;
+  }
+</style>
+
 <div class="login-container">
-    <h2>Welcome to O365 RBAC</h2>
-    <p>Office 365 Role-Based Access Control System</p>
-    <a href="{{ url_for('auth.login') }}">
-        <button type="button">Get Started</button>
-    </a>
+  <h2>Welcome to O365 RBAC</h2>
+  <p>Office 365 Role-Based Access Control System</p>
+
+  <div class="actions">
+    <!-- Correct endpoint for your auth blueprint -->
+    <a class="btn" href="{{ url_for('auth.login') }}">Sign in with Microsoft</a>
+
+    <!-- Users page (will redirect/403 if not admin; that's OK) -->
+    <a class="btn secondary" href="{{ url_for('users_bp.users_page') }}">Manage Users</a>
+  </div>
+
+  {% if session.get('user') %}
+    <p class="small">
+      Signed in as {{ session['user'].get('name') or session['user'].get('email') }}
+    </p>
+  {% endif %}
 </div>
 {% endblock %}
+
