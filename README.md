@@ -77,17 +77,27 @@ After you log in, Flask remembers you so you don't have to log in on every page.
 
 ## How to Setup and Run
 
-1. Install the required packages:
-   ```
+1. **Configure environment variables:**
+   - Edit `.env` and add your Microsoft Azure credentials:
+     ```
+     CLIENT_ID=your-client-id-here
+     CLIENT_SECRET=your-client-secret-here
+     TENANT_ID=your-tenant-id-here
+     FLASK_SECRET_KEY=your-flask-secret-key
+     ```
+   - Get these credentials from [Azure Portal](https://portal.azure.com) by registering an app
+
+2. **Install the required packages:**
+   ```bash
    pip install -r requirements.txt
    ```
 
-2. Run the application:
-   ```
+3. **Run the application:**
+   ```bash
    python3 run.py
    ```
 
-3. Open your web browser and go to:
+4. **Open your web browser and go to:**
    ```
    http://localhost:5000
    ```
