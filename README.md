@@ -108,3 +108,15 @@ After you log in, Flask remembers you so you don't have to log in on every page.
 
 - **[userManagement.md](userManagement.md)** - Detailed feature implementation guide
 - **[graphs/contributors.md](graphs/contributors.md)** - Team member contributions
+
+---
+
+## PDF Generation (LaTeX)
+
+- The utility `app/utils/pdf_generator.py` generates PDFs using LaTeX (`pdflatex`) via a Makefile in the `latex_templates/` directory.
+- System requirement: you must have a LaTeX distribution installed that provides `pdflatex` (e.g., TeX Live or MiKTeX).
+  - macOS: `brew install mactex-no-gui` (or install MacTeX from https://tug.org/mactex/)
+  - Linux: install TeX Live (`texlive-full` or the packages providing `pdflatex`).
+  - Windows: install MiKTeX.
+- The folder `latex_templates/` is created at runtime if missing.
+- On first PDF generation, a `Makefile` is written automatically with a pattern rule to compile `.tex` to `.pdf` using `pdflatex`.

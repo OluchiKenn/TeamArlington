@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, redirect, request, session, url_for
 from msal import ConfidentialClientApplication
 import os
+from sqlalchemy import func
+from app.models import db, User
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -41,7 +43,24 @@ def authorized():
     )
 
     if "access_token" in result:
-        session["user"] = result["id_token_claims"]
+        claims = result["id_token_claims"]
+        session["user"] = claims
+
+        # Auto-provision or update DB user for current session user
+        email = (claims.get("email") or claims.get("preferred_username") or "").strip()
+        display_name = (claims.get("name") or email.split("@")[0] or "User").strip()
+        if email:
+            existing = User.query.filter(func.lower(User.email) == email.lower()).first()
+            if not existing:
+                u = User(name=display_name, email=email, role="basicuser", status="active")
+                db.session.add(u)
+                db.session.commit()
+            else:
+                # Optionally update the name if it changed
+                if display_name and existing.name != display_name:
+                    existing.name = display_name
+                    db.session.commit()
+
         return redirect(url_for("auth.profile"))
     else:
         return f"Error: {result.get('error_description')}"

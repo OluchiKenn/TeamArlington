@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Signature{% endblock %}
+
+{% block content %}
+  <h1>Upload Signature</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flash-messages">
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  {% if signature and signature.image_path %}
+    <div class="signature-preview">
+      <p>Current signature:</p>
+      <img src="{{ image_url }}" alt="Signature" style="max-width: 400px; height: auto; border: 1px solid #ccc;" />
+    </div>
+  {% endif %}
+
+  <form action="{{ url_for('approvals_bp.signature_upload_post') }}" method="post" enctype="multipart/form-data">
+    <label for="signature">Choose PNG or JPEG (max 2MB)</label><br>
+    <input type="file" id="signature" name="signature" accept="image/png,image/jpeg" required>
+    <button type="submit">Upload</button>
+  </form>
+{% endblock %}
