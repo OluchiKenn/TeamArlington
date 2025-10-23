@@ -4,7 +4,15 @@ from dotenv import load_dotenv
 from app.auth.routes import auth_bp
 from app.users.routes import users_bp
 from app.approvals.routes import approvals_bp
-from app.models import db
+from app.models import db, FormTemplate
+from app.utils.forms_config import FORM_TEMPLATES
+
+def seed_form_templates():
+    """Insert form templates if they don't exist yet."""
+    for f in FORM_TEMPLATES:
+        if not FormTemplate.query.filter_by(form_code=f["form_code"]).first():
+            db.session.add(FormTemplate(**f))
+    db.session.commit()
 
 def create_app():
     """Application factory pattern for Flask app."""
@@ -32,6 +40,7 @@ def create_app():
     # Create tables and ensure upload directory when the app starts
     with app.app_context():
         db.create_all()
+        seed_form_templates()
         # Ensure upload directory exists (relative to project root)
         base_dir = os.path.abspath(os.path.join(app.root_path, os.pardir, app.config["UPLOAD_FOLDER"]))
         os.makedirs(base_dir, exist_ok=True)
