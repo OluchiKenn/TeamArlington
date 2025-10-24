@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Fill Form{% endblock %}
+
+{% block content %}
+<h2>{{ form_template.name }}</h2>
+
+<form method="POST" enctype="multipart/form-data" 
+      action="{{ url_for('approvals_bp.edit_request', request_id=req.id) if current_data else url_for('approvals_bp.submit_request', form_code=form_template.form_code) }}">
+
+
+  {% for key, field in form_template.fields_json.items() %}
+    {% if key not in ["from_value", "to_value", "additional_details"] %}
+      <div class="form-group" style="margin-bottom: 10px;">
+        <label>{{ key.replace('_', ' ').title() }}:</label>
+
+        {# Select dropdown #}
+        {% if field is mapping and field.type == "select" %}
+          <select name="{{ key }}" id="{{ key }}">
+            {% for option in field.options %}
+              <option value="{{ option }}" {% if current_data and key in current_data and current_data[key] == option %}selected{% endif %}>
+                {{ option }}
+              </option>
+            {% endfor %}
+          </select>
+
+        {# Text input #}
+        {% elif field == "text" %}
+          <input type="text" name="{{ key }}" value="{{ current_data[key] if current_data and key in current_data else '' }}">
+
+        {# Email input #}
+        {% elif field == "email" %}
+          <input type="email" name="{{ key }}" value="{{ current_data[key] if current_data and key in current_data else '' }}">
+
+        {# Date input #}
+        {% elif field == "date" %}
+          <input type="date" name="{{ key }}" value="{{ current_data[key] if current_data and key in current_data else '' }}">
+
+        {# Textarea #}
+        {% elif field == "textarea" %}
+          <textarea name="{{ key }}" rows="4" cols="50">{{ current_data[key] if current_data and key in current_data else '' }}</textarea>
+
+        {# File input #}
+        {% elif field == "file" %}
+          <input type="file" name="{{ key }}">
+          {% if current_data and key in current_data and current_data[key] %}
+            <p>Current file: {{ current_data[key] }}</p>
+          {% endif %}
+
+        {# Auto date #}
+        {% elif field == "auto_date" %}
+          <input type="text" name="{{ key }}" value="{{ current_data[key] if current_data and key in current_data else current_date }}" readonly>
+
+        {# Checkbox list #}
+        {% elif field is iterable and field is not string %}
+          {% for option in field %}
+            <label>
+              <input type="checkbox" name="{{ key }}" value="{{ option }}"
+                {% if current_data and key in current_data and option in current_data[key] %}checked{% endif %}>
+              {{ option }}
+            </label><br>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      {% if key == "petition_number" %}
+        <div id="change-fields" style="display: none; margin-bottom: 10px;">
+          <label>From:</label>
+          <input type="text" name="from_value" value="{{ current_data.from_value if current_data and 'from_value' in current_data else '' }}">
+
+          <label>To:</label>
+          <input type="text" name="to_value" value="{{ current_data.to_value if current_data and 'to_value' in current_data else '' }}">
+
+          <label>Additional Details:</label>
+          <textarea name="additional_details" rows="3" cols="50">{{ current_data.additional_details if current_data and 'additional_details' in current_data else '' }}</textarea>
+        </div>
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  <div style="margin-top: 20px;">
+    <button type="submit" name="action" value="draft">Save Draft</button>
+    <button type="submit" name="action" value="submit">Submit</button>
+  </div>
+
+</form>
+
+<script>
+  
+  const petitionSelect = document.getElementById("petition_number");
+  const changeFields = document.getElementById("change-fields");
+  if (petitionSelect && changeFields) {
+    petitionSelect.addEventListener("change", function() {
+      const val = this.value || "";
+      if (val.includes("Change") || val.includes("Remove") || val.includes("Add")) {
+        changeFields.style.display = "block";
+      } else {
+        changeFields.style.display = "none";
+      }
+    });
+
+    
+    if (petitionSelect.value.includes("Change") || petitionSelect.value.includes("Remove") || petitionSelect.value.includes("Add")) {
+      changeFields.style.display = "block";
+    }
+  }
+</script>
+{% endblock %}
+

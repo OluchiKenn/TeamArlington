@@ -17,10 +17,10 @@ FORM_TEMPLATES = [
         }
     },
     {
-        "name": "General Petition Form",
-        "form_code": "general_petition",
-        "latex_template_path": "latex/general_petition_template.tex",
-"fields_json": {
+    "name": "General Petition Form",
+    "form_code": "general_petition",
+    "latex_template_path": "latex/general_petition_template.tex",
+    "fields_json": {
         "student_name": "text",
         "student_id": "text",
         "phone_number": "text",
@@ -30,32 +30,35 @@ FORM_TEMPLATES = [
         "zip": "text",
         "email": "email",
 
-        "degree_type": "text",
-        "petition_number": {
+        "petition_reason_number": {
             "type": "select",
             "options": [
-                "1. Update Student’s Program Status",
+                "1. Update Student’s Program Status / Action (readmit, term activate, etc.)",
                 "2. Admission Status Change",
                 "3. Add New Career",
-                "4. Program Change",
-                "5. Major Change",
-                "6. Degree Objective Change",
-                "7. Requirement Term",
-                "8. Additional Plan",
-                "9. Add Second Degree",
-                "10. Remove/Change Minor",
-                "11. Add Additional Minor",
+                "4. Program Change (From → To)",
+                "5. Major Change (From → To)",
+                "6. Degree Objective / Plan Change (B.A., B.S., etc.)",
+                "7. Requirement Term (UH Catalog / Career)",
+                "8. Additional Plan or Courses",
+                "9. Add Second Degree In",
+                "10. Remove or Change Minor (From → To)",
+                "11. Add Additional Minor In",
                 "12. Degree Requirement Exception",
-                "13. Special Problems Course Request",
-                "14. Course Overload",
+                "13. Special Problems Course Request (Include Course Details)",
+                "14. Course Overload (Include GPA / Hours)",
                 "15. Graduate Studies Leave of Absence",
                 "16. Graduate Studies Reinstatement",
                 "17. Other"
             ]
         },
+
+        "from_value": "text",
+        "to_value": "text",
+        "additional_details": "textarea",
         "explanation_of_request": "textarea",
         "signature": "file",
         "date": "auto_date"
     }
-    }
+}
 ]

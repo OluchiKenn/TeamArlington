@@ -71,4 +71,5 @@ def profile():
     if "user" not in session:
         return redirect(url_for("auth.login"))
     user = session["user"]
+    print(session)
     return render_template("profile.html", user=user)
