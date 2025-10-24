@@ -1,37 +1,45 @@
 {% extends "base.html" %}
-{% block title %}My Requests{% endblock %}
 {% block content %}
 <h2>My Requests</h2>
 
-{% if requests %}
-  <table border="1" cellpadding="6">
+<table border="1" cellpadding="6" cellspacing="0" width="100%">
+  <thead>
     <tr>
-      <th>ID</th>
+      <th>#</th>
       <th>Form</th>
       <th>Status</th>
-      <th>Created</th>
       <th>Updated</th>
-      <th>Actions</th>  
+      <th>Open</th>
     </tr>
-    {% for r in requests %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.form_template.name }}</td>
-        <td>{{ r.status }}</td>
-        <td>{{ r.created_at.strftime("%Y-%m-%d") }}</td>
-        <td>{{ r.updated_at.strftime("%Y-%m-%d") }}</td>
-        <td>
-          {% if r.status == 'draft' %}
-            <a href="{{ url_for('approvals_bp.edit_request', request_id=r.id) }}">Edit</a>
-          {% else %}
-            
-            -
-          {% endif %}
-        </td>
-      </tr>
+  </thead>
+  <tbody>
+    {% for req in requests %}
+    <tr>
+      <td>
+        <a href="{{ url_for('approvals_bp.student_request_detail', 
+request_id=req.id) }}">
+          {{ req.id }}
+        </a>
+      </td>
+      <td>{{ req.form_template.name if req.form_template else '—' }}</td>
+      <td>{{ req.status|upper }}</td>
+      <td>{{ req.updated_at.strftime("%Y-%m-%d %H:%M") if req.updated_at 
+else '' }}</td>
+      <td>
+        <a href="{{ url_for('approvals_bp.student_request_detail', 
+request_id=req.id) }}">
+          Open ›
+        </a>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="5">
+        <em>You don’t have any requests yet.</em>
+      </td>
+    </tr>
     {% endfor %}
-  </table>
-{% else %}
-  <p>No requests yet.</p>
-{% endif %}
+  </tbody>
+</table>
 {% endblock %}
+

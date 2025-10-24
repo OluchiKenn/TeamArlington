@@ -1,11 +1,9 @@
 # app/approvals/routes.py
 import os
 from datetime import datetime
-from flask import (
-    Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, session
-)
+from flask import (Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, session )
 from werkzeug.utils import secure_filename
-from app.models import db, User, Signature, Request, FormTemplate
+from app.models import db, User, Signature, Request, FormTemplate, ApprovalStep
 from app.users.routes import require_login, current_db_user
 from datetime import datetime
 import json
@@ -321,3 +319,186 @@ def list_my_requests():
     requests = Request.query.filter_by(requester_id=requester_id).order_by(Request.created_at.desc()).all()
 
     return render_template("my_requests.html", requests=requests)
+
+
+
+from sqlalchemy.orm import joinedload
+
+def _dto_row_for_approver(req_obj: Request, step: ApprovalStep):
+    return {
+        "id": req_obj.id,
+        "student_name": req_obj.requester.name if req_obj.requester else "—",
+        "form_name": req_obj.form_template.name if req_obj.form_template else "—",
+        "state": req_obj.status.upper(),
+        "step_number": step.sequence if step else None,
+        "step_status": step.status.upper() if step else None,
+        "updated_at": req_obj.updated_at.strftime("%Y-%m-%d %H:%M") if req_obj.updated_at else ""
+    }
+
+def _dto_row_for_student(req_obj: Request, current_step: ApprovalStep | None):
+    return {
+        "id": req_obj.id,
+        "form_name": req_obj.form_template.name if req_obj.form_template else "—",
+        "state": req_obj.status.upper(),
+        "step_number": current_step.sequence if current_step else None,
+        "step_status": current_step.status.upper() if current_step else None,
+        "updated_at": req_obj.updated_at.strftime("%Y-%m-%d %H:%M") if req_obj.updated_at else ""
+    }
+
+def _detail_dto(req_obj: Request):
+    # current step = first 'pending' else last step
+    pending = next((s for s in req_obj.approval_steps if s.status == "pending"), None)
+    last    = req_obj.approval_steps[-1] if req_obj.approval_steps else None
+    current = pending or last
+
+    # history timeline
+    history = []
+    if req_obj.submitted_at:
+        history.append({
+            "at": req_obj.submitted_at.strftime("%Y-%m-%d %H:%M"),
+            "event": "SUBMITTED",
+            "by": req_obj.requester.name if req_obj.requester else "System"
+        })
+    for s in req_obj.approval_steps:
+        if s.status in ("approved", "rejected", "returned") and s.actioned_at:
+            history.append({
+                "at": s.actioned_at.strftime("%Y-%m-%d %H:%M"),
+                "event": s.status.upper(),
+                "by": s.approver.name if s.approver else "Approver"
+            })
+
+    # PDFs from signed_pdf_path on steps
+    pdfs = []
+    for s in req_obj.approval_steps:
+        if s.signed_pdf_path:
+            pdfs.append({
+                "name": os.path.basename(s.signed_pdf_path),
+                "url": f"/{s.signed_pdf_path.lstrip('/')}",
+                "stateAtGen": s.status.upper(),
+                "stepNumber": s.sequence
+            })
+
+    # flatten form_data_json
+    fields = []
+    data = req_obj.form_data_json or {}
+    if isinstance(data, dict):
+        for k, v in data.items():
+            label = k.replace("_", " ").title()
+            fields.append({"label": label, "value": v})
+
+    return {
+        "id": req_obj.id,
+        "form_name": req_obj.form_template.name if req_obj.form_template else "—",
+        "student": {
+            "name": req_obj.requester.name if req_obj.requester else "—",
+            "email": req_obj.requester.email if req_obj.requester else "—",
+        },
+        "state": req_obj.status.upper(),
+        "current_step": {
+            "number": current.sequence if current else None,
+            "assignee": current.approver.name if current and current.approver else None 
+},
+        "submitted_at": req_obj.submitted_at.strftime("%Y-%m-%d %H:%M") if req_obj.submitted_at else "",
+        "updated_at": req_obj.updated_at.strftime("%Y-%m-%d %H:%M") if req_obj.updated_at else "",
+        "fields": fields,
+        "history": history,
+        "pdfs": pdfs
+    }
+
+# -------- Approver Dashboard--------
+
+@approvals_bp.get("/approver/dashboard")
+@require_login
+def approver_dashboard():
+    me = current_db_user()
+    if not me:
+        flash("You must be logged in.", "warning")
+        return redirect(url_for("auth.login"))
+
+    state = (request.args.get("state") or "").lower()  # default empty shows pending by step
+    q = (request.args.get("q") or "").strip().lower()
+
+    steps_q = (ApprovalStep.query
+               .filter(ApprovalStep.approver_id == me.id)
+               .join(Request, ApprovalStep.request_id == Request.id)
+               .options(joinedload(ApprovalStep.request)
+                        .joinedload(Request.form_template),
+                        joinedload(ApprovalStep.request)
+                        .joinedload(Request.requester))
+               .order_by(Request.updated_at.desc()))
+
+    # default: show pending step assignments; if state filter given (approved/rejected/returned),
+    # apply to the Request.status instead
+    rows = []
+    for s in steps_q.limit(200).all():
+        req = s.request
+        if state:
+            if req.status != state:
+                continue
+        else:
+            if s.status != "pending":
+                continue
+        if q and (q not in str(req.id).lower()
+                  and q not in (req.requester.name or "").lower()
+                  and q not in (req.form_template.name or "").lower()):
+            continue
+        rows.append(_dto_row_for_approver(req, s))
+
+    return render_template("approver_dashboard.html", requests=rows)
+
+@approvals_bp.get("/approver/requests/<int:request_id>")
+@require_login
+def approver_request_detail(request_id: int):
+    me = current_db_user()
+    if not me:
+        flash("You must be logged in.", "warning")
+        return redirect(url_for("auth.login"))
+
+    req_obj = (Request.query
+               .options(joinedload(Request.form_template),
+                        joinedload(Request.requester),
+                        
+joinedload(Request.approval_steps).joinedload(ApprovalStep.approver))
+               .filter_by(id=request_id)
+               .first())
+    if not req_obj:
+        flash("Request not found.", "warning")
+        return redirect(url_for("approvals_bp.approver_dashboard"))
+
+    # must be assigned approver or admin
+    assigned = any(s.approver_id == me.id for s in req_obj.approval_steps)
+    if not assigned and me.role != "admin":
+        flash("You are not authorized to view this request.", "warning")
+        return redirect(url_for("approvals_bp.approver_dashboard"))
+
+    d = _detail_dto(req_obj)
+    return render_template("request_detail.html", d=d, view="approver")
+
+# -------- Student Request Detail --------
+
+@approvals_bp.get("/student/requests/<int:request_id>")
+@require_login
+def student_request_detail(request_id: int):
+    me = current_db_user()
+    if not me:
+        flash("You must be logged in.", "warning")
+        return redirect(url_for("auth.login"))
+
+    req_obj = (Request.query
+               .options(joinedload(Request.form_template),
+                        joinedload(Request.requester),
+                        
+joinedload(Request.approval_steps).joinedload(ApprovalStep.approver))
+               .filter_by(id=request_id)
+               .first())
+    if not req_obj:
+        flash("Request not found.", "warning")
+        return redirect(url_for("approvals_bp.list_my_requests"))
+
+    if req_obj.requester_id != me.id and me.role != "admin":
+        flash("You are not authorized to view this request.", "warning")
+        return redirect(url_for("approvals_bp.list_my_requests"))
+
+    d = _detail_dto(req_obj)
+    return render_template("request_detail.html", d=d, view="student")
+

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Approver Dashboard</h2>
+
+<form method="get" class="mb-3">
+  <label>State:
+    <select name="state">
+      <option value="">(show pending by default)</option>
+      {% for s in ['pending','returned','approved','rejected'] %}
+      <option value="{{ s }}" {{ 'selected' if 
+request.args.get('state')==s else '' }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Search: <input type="text" name="q" value="{{ 
+request.args.get('q','') }}"></label>
+  <button type="submit">Filter</button>
+</form>
+
+<table border="1" cellpadding="6" cellspacing="0" width="100%">
+  <thead>
+    <tr>
+      <th>#</th><th>Student</th><th>Form</th><th>Step</th><th>Req. 
+State</th><th>Updated</th><th>Open</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in requests %}
+    <tr>
+      <td>{{ r.id }}</td>
+      <td>{{ r.student_name }}</td>
+      <td>{{ r.form_name }}</td>
+      <td>{{ r.step_number }} ({{ r.step_status }})</td>
+      <td>{{ r.state }}</td>
+      <td>{{ r.updated_at }}</td>
+      <td><a href="{{ url_for('approvals_bp.approver_request_detail', 
+request_id=r.id) }}">Open ›</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7"><em>No requests found.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

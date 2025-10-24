@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Request #{{ d.id }} — {{ d.form_name }}</h2>
+
+<div>
+  <strong>State:</strong> {{ d.state }}
+  {% if d.current_step.number %}| <strong>Step:</strong> {{ 
+d.current_step.number }}{% endif %}
+  {% if d.current_step.assignee %}| <strong>Assignee:</strong> {{ 
+d.current_step.assignee }}{% endif %}
+</div>
+<div class="muted">Submitted: {{ d.submitted_at }} | Updated: {{ 
+d.updated_at }}</div>
+
+{% if view == 'approver' %}
+  <p class="muted">Approver view (read-only for Bundle 6)</p>
+{% else %}
+  <p class="muted">Student view</p>
+{% endif %}
+
+<h3>Fields</h3>
+<table border="1" cellpadding="6" cellspacing="0">
+  <tbody>
+    {% for f in d.fields %}
+    <tr><th>{{ f.label }}</th><td>{{ f.value }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>History</h3>
+<ol>
+  {% for e in d.history %}
+  <li><strong>{{ e.event }}</strong> — {{ e.at }} <span class="muted">({{ 
+e.by }})</span></li>
+  {% endfor %}
+</ol>
+
+<h3>PDFs</h3>
+<ul>
+  {% if d.pdfs|length == 0 %}
+    <li><em>No PDFs yet.</em></li>
+  {% endif %}
+  {% for p in d.pdfs %}
+    <li><a href="{{ p.url }}" target="_blank" rel="noreferrer">{{ p.name 
+}}</a>
+        <span class="muted">— {{ p.stateAtGen }} (step {{ p.stepNumber 
+}})</span></li>
+  {% endfor %}
+</ul>
+{% endblock %}
+
