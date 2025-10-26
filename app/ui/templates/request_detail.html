@@ -13,9 +13,32 @@ d.current_step.assignee }}{% endif %}
 d.updated_at }}</div>
 
 {% if view == 'approver' %}
-  <p class="muted">Approver view (read-only for Bundle 6)</p>
+  {% if has_pending_for_me %}
+  <div style="margin: 16px 0; padding: 12px; border: 1px solid #ddd;">
+    <h4>Actions</h4>
+    <form method="post" action="{{ url_for('approvals_bp.approver_request_approve', request_id=d.id) }}" style="margin-bottom:8px;">
+      <div>
+        <label for="approve-comments">Comments (optional)</label>
+        <textarea id="approve-comments" name="comments" rows="3" style="width:100%"></textarea>
+      </div>
+      <button type="submit">Approve</button>
+    </form>
+    <form method="post" action="{{ url_for('approvals_bp.approver_request_return', request_id=d.id) }}">
+      <div>
+        <label for="return-comments">Comments (optional)</label>
+        <textarea id="return-comments" name="comments" rows="3" style="width:100%"></textarea>
+      </div>
+      <button type="submit">Return</button>
+    </form>
+  </div>
+  {% else %}
+  <p class="muted">Approver view</p>
+  {% endif %}
 {% else %}
   <p class="muted">Student view</p>
+  {% if d.state == 'RETURNED' %}
+    <p><a href="{{ url_for('approvals_bp.edit_request', request_id=d.id) }}">Resubmit</a></p>
+  {% endif %}
 {% endif %}
 
 <h3>Fields</h3>

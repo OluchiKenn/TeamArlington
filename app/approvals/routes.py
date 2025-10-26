@@ -4,6 +4,7 @@ from datetime import datetime
 from flask import (Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, session )
 from werkzeug.utils import secure_filename
 from app.models import db, User, Signature, Request, FormTemplate, ApprovalStep
+from app.utils.pdf_generator import generate_request_pdf
 from app.users.routes import require_login, current_db_user
 from datetime import datetime
 import json
@@ -472,7 +473,113 @@ joinedload(Request.approval_steps).joinedload(ApprovalStep.approver))
         return redirect(url_for("approvals_bp.approver_dashboard"))
 
     d = _detail_dto(req_obj)
-    return render_template("request_detail.html", d=d, view="approver")
+    # determine if current user has a pending step
+    has_pending_for_me = any(s.approver_id == me.id and s.status == "pending" for s in req_obj.approval_steps)
+    return render_template("request_detail.html", d=d, view="approver", has_pending_for_me=has_pending_for_me)
+
+@approvals_bp.post("/approver/requests/<int:request_id>/approve")
+@require_login
+def approver_request_approve(request_id: int):
+    me = current_db_user()
+    if not me:
+        flash("You must be logged in.", "warning")
+        return redirect(url_for("auth.login"))
+
+    req_obj = (Request.query
+               .options(joinedload(Request.approval_steps),
+                        joinedload(Request.requester),
+                        joinedload(Request.form_template))
+               .filter_by(id=request_id)
+               .first())
+    if not req_obj:
+        flash("Request not found.", "warning")
+        return redirect(url_for("approvals_bp.approver_dashboard"))
+
+    # current pending step for this approver
+    step = next((s for s in req_obj.approval_steps if s.approver_id == me.id and s.status == "pending"), None)
+    if not step:
+        flash("No pending step for you", "warning")
+        return redirect(url_for("approvals_bp.approver_dashboard"))
+
+    # ensure signature exists
+    sig = Signature.query.filter_by(user_id=me.id).first()
+    if not sig or not sig.image_path:
+        flash("Please upload a signature first", "warning")
+        return redirect(url_for("approvals_bp.signature_upload_get"))
+
+    # Collect signature paths: all previously approved steps + current approver, in sequence order
+    signature_paths = []
+    for s in sorted(req_obj.approval_steps, key=lambda x: x.sequence):
+        if s.status == "approved" or s.id == step.id:
+            other_sig = Signature.query.filter_by(user_id=s.approver_id).first()
+            if other_sig and other_sig.image_path:
+                signature_paths.append(other_sig.image_path)
+
+    # Generate PDF and store relative path
+    try:
+        pdf_rel_path = generate_request_pdf(req_obj, signature_paths)
+        step.signed_pdf_path = pdf_rel_path
+    except Exception as e:
+        flash(f"Failed to generate PDF: {e}", "danger")
+        return redirect(url_for("approvals_bp.approver_request_detail", request_id=req_obj.id))
+
+    # Update step
+    step.status = "approved"
+    step.actioned_at = datetime.utcnow()
+    step.comments = request.form.get("comments")
+
+    # If all steps approved, mark request approved
+    if all(s.status == "approved" for s in req_obj.approval_steps):
+        req_obj.status = "approved"
+        flash("Request fully approved ✅", "success")
+    else:
+        flash("Approved and forwarded to next approver ➡️", "success")
+
+    db.session.commit()
+    return redirect(url_for("approvals_bp.approver_dashboard"))
+
+@approvals_bp.post("/approver/requests/<int:request_id>/return")
+@require_login
+def approver_request_return(request_id: int):
+    me = current_db_user()
+    if not me:
+        flash("You must be logged in.", "warning")
+        return redirect(url_for("auth.login"))
+
+    req_obj = (Request.query
+               .options(joinedload(Request.approval_steps),
+                        joinedload(Request.requester),
+                        joinedload(Request.form_template))
+               .filter_by(id=request_id)
+               .first())
+    if not req_obj:
+        flash("Request not found.", "warning")
+        return redirect(url_for("approvals_bp.approver_dashboard"))
+
+    # current pending step for this approver
+    step = next((s for s in req_obj.approval_steps if s.approver_id == me.id and s.status == "pending"), None)
+    if not step:
+        flash("No pending step", "warning")
+        return redirect(url_for("approvals_bp.approver_dashboard"))
+
+    # Update current step
+    step.status = "returned"
+    step.actioned_at = datetime.utcnow()
+    step.comments = request.form.get("comments")
+
+    # Update request
+    req_obj.status = "returned"
+
+    # Reset all other steps
+    for s in req_obj.approval_steps:
+        if s.id != step.id:
+            s.status = "pending"
+            s.actioned_at = None
+            s.signed_pdf_path = None
+
+    db.session.commit()
+    flash("Request returned to student for revision 🔙", "success")
+    return redirect(url_for("approvals_bp.approver_dashboard"))
 
 # -------- Student Request Detail --------
 
